@@ -31,9 +31,16 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
-      - name: Install Ninja (Windows)
-        if: runner.os == 'Windows'
-        uses: sean0x42/cmake-ninja-on-windows@v0.1
+      - name: Install Ninja
+        shell: bash
+        run: |
+          if ! command -v ninja &> /dev/null; then
+            NINJA_VERSION="1.11.1"
+            curl -sSL "https://github.com/ninja-build/ninja/releases/download/v${NINJA_VERSION}/ninja-win.zip" -o ninja.zip
+            unzip -o ninja.zip -d $HOME/.local/bin/
+            echo "$HOME/.local/bin" >> $GITHUB_PATH
+          fi
+          ninja --version
 
       - name: Download VST3 SDK
         if: runner.os != 'Linux'
