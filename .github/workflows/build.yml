@@ -15,6 +15,7 @@ jobs:
         include:
           - os: windows-latest
             generator: "Visual Studio 17 2022"
+            arch: x64
             artifact: plugins-windows
           - os: macos-latest
             generator: Xcode
@@ -31,13 +32,33 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
+      - name: Download VST3 SDK
+        if: runner.os != 'Linux'
+        run: |
+          cd iPlug2/Dependencies/IPlug
+          git clone https://github.com/steinbergmedia/vst3sdk.git --branch master --single-branch --depth=1 VST3_SDK
+          cd VST3_SDK
+          git submodule update --init --recursive --depth=1
+
+      - name: Download CLAP SDK
+        if: runner.os == 'Linux'
+        run: |
+          cd iPlug2/Dependencies/IPlug
+          git clone https://github.com/free-audio/clap.git --branch main --single-branch --depth=1 CLAP_SDK
+
       - name: Install dependencies (Ubuntu)
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y libx11-dev libcairo2-dev libfreetype6-dev libasound2-dev libjack-jackd2-dev libcurl4-openssl-dev libxinerama-dev
 
-      - name: Configure
+      - name: Configure (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          cmake -B build -G "${{ matrix.generator }}" -A ${{ matrix.arch }} -DCMAKE_BUILD_TYPE=Release -DIPLUG2_DIR=${{ github.workspace }}/iPlug2
+
+      - name: Configure (macOS/Linux)
+        if: runner.os != 'Windows'
         run: |
           cmake -B build -G "${{ matrix.generator }}" -DCMAKE_BUILD_TYPE=Release -DIPLUG2_DIR=${{ github.workspace }}/iPlug2
 
