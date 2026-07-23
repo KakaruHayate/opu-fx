@@ -1,0 +1,86 @@
+name: Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+        include:
+          - os: windows-latest
+            generator: "Visual Studio 17 2022"
+            artifact: plugins-windows
+          - os: macos-latest
+            generator: Xcode
+            artifact: plugins-macos
+          - os: ubuntu-latest
+            generator: "Unix Makefiles"
+            artifact: plugins-linux
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Install dependencies (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libx11-dev libcairo2-dev libfreetype6-dev libasound2-dev libjack-jackd2-dev libcurl4-openssl-dev libxinerama-dev
+
+      - name: Configure
+        run: |
+          cmake -B build -G "${{ matrix.generator }}" -DCMAKE_BUILD_TYPE=Release -DIPLUG2_DIR=${{ github.workspace }}/iPlug2
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Upload artifacts (Windows)
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: |
+            build/src/OO_EQ/out/*.vst3
+            build/src/OO_Comp/out/*.vst3
+            build/src/OO_Reverb/out/*.vst3
+            build/src/OO_TrackPolish/out/*.vst3
+
+      - name: Upload artifacts (macOS)
+        if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: |
+            build/src/OO_EQ/out/*.vst3
+            build/src/OO_Comp/out/*.vst3
+            build/src/OO_Reverb/out/*.vst3
+            build/src/OO_TrackPolish/out/*.vst3
+            build/src/OO_EQ/out/*.component
+            build/src/OO_Comp/out/*.component
+            build/src/OO_Reverb/out/*.component
+            build/src/OO_TrackPolish/out/*.component
+
+      - name: Upload artifacts (Linux)
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: |
+            build/src/OO_EQ/out/*.vst3
+            build/src/OO_Comp/out/*.vst3
+            build/src/OO_Reverb/out/*.vst3
+            build/src/OO_TrackPolish/out/*.vst3
+            build/src/OO_EQ/out/*.clap
+            build/src/OO_Comp/out/*.clap
+            build/src/OO_Reverb/out/*.clap
+            build/src/OO_TrackPolish/out/*.clap
