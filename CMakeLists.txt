@@ -8,7 +8,48 @@ if(NOT DEFINED IPLUG2_DIR)
   set(IPLUG2_DIR "${CMAKE_CURRENT_SOURCE_DIR}/iPlug2" CACHE PATH "iPlug2 root")
 endif()
 
-add_subdirectory(src/OO_EQ)
-add_subdirectory(src/OO_Comp)
-add_subdirectory(src/OO_Reverb)
-add_subdirectory(src/OO_TrackPolish)
+include(${IPLUG2_DIR}/iPlug2.cmake)
+find_package(iPlug2 REQUIRED)
+
+# Shared DSP header-only library
+add_library(opufx_dsp INTERFACE)
+target_include_directories(opufx_dsp INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/src/dsp)
+
+# Helper: after iplug_add_plugin creates _<name>-base, attach DSP include
+function(add_opu_plugin NAME)
+  cmake_parse_arguments(ARG "" "" "SOURCES" ${ARGN})
+  iplug_add_plugin(${NAME}
+    SOURCES ${ARG_SOURCES}
+    FORMATS VST3 CLAP APP
+    LINK opufx_dsp
+  )
+  target_include_directories(_${NAME}-base INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/src/dsp)
+endfunction()
+
+add_opu_plugin(OO_EQ
+  SOURCES
+    src/OO_EQ/OO_EQ.cpp
+    src/OO_EQ/OO_EQ.h
+    src/OO_EQ/config.h
+)
+
+add_opu_plugin(OO_Comp
+  SOURCES
+    src/OO_Comp/OO_Comp.cpp
+    src/OO_Comp/OO_Comp.h
+    src/OO_Comp/config.h
+)
+
+add_opu_plugin(OO_Reverb
+  SOURCES
+    src/OO_Reverb/OO_Reverb.cpp
+    src/OO_Reverb/OO_Reverb.h
+    src/OO_Reverb/config.h
+)
+
+add_opu_plugin(OO_TrackPolish
+  SOURCES
+    src/OO_TrackPolish/OO_TrackPolish.cpp
+    src/OO_TrackPolish/OO_TrackPolish.h
+    src/OO_TrackPolish/config.h
+)

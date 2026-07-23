@@ -8,10 +8,9 @@ endif()
 include(${IPLUG2_DIR}/iPlug2.cmake)
 find_package(iPlug2 REQUIRED)
 
-target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../dsp)
-
 iplug_add_plugin(${PROJECT_NAME}
   SOURCES OO_Reverb.cpp OO_Reverb.h config.h
   FORMATS VST3 CLAP APP
   LINK opufx_dsp
 )
+target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../dsp)
