@@ -19,6 +19,8 @@
 
 namespace opu::dsp {
 
+inline constexpr double Pi = 3.141592653589793238462643383279502884;
+
 // ── BiquadEQ ─────────────────────────────────────────────────────────
 // Three-band biquad equaliser: low-shelf 200 Hz / peak / high-shelf 8 kHz.
 
@@ -92,7 +94,7 @@ private:
         // RBJ Audio EQ Cookbook
         void SetPeak(double fs, double f0, double Q, double gainDb) {
             double A  = std::pow(10.0, gainDb / 40.0);
-            double w0 = 2.0 * M_PI * f0 / fs;
+            double w0 = 2.0 * Pi * f0 / fs;
             double cw = std::cos(w0), sw = std::sin(w0);
             double alpha = sw / (2.0 * Q);
             double a0_inv = 1.0 / (1.0 + alpha / A);
@@ -106,7 +108,7 @@ private:
 
         void SetLowShelf(double fs, double f0, double gainDb) {
             double A  = std::pow(10.0, gainDb / 40.0);
-            double w0 = 2.0 * M_PI * f0 / fs;
+            double w0 = 2.0 * Pi * f0 / fs;
             double cw = std::cos(w0), sw = std::sin(w0);
             double S = 1.0;
             double alpha = sw / 2.0 * std::sqrt((A + 1.0 / A) * (1.0 / S - 1.0) + 2.0);
@@ -122,7 +124,7 @@ private:
 
         void SetHighShelf(double fs, double f0, double gainDb) {
             double A  = std::pow(10.0, gainDb / 40.0);
-            double w0 = 2.0 * M_PI * f0 / fs;
+            double w0 = 2.0 * Pi * f0 / fs;
             double cw = std::cos(w0), sw = std::sin(w0);
             double S = 1.0;
             double alpha = sw / 2.0 * std::sqrt((A + 1.0 / A) * (1.0 / S - 1.0) + 2.0);
