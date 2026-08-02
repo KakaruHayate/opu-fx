@@ -1,0 +1,3 @@
+// Shared Windows resources for opu-fx VST3 plug-ins.
+// iPlug2 resolves fonts from the plug-in module by resource name and TTF type.
+"Roboto-Regular.ttf" TTF "fonts\\Roboto-Regular.ttf"
