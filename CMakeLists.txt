@@ -15,15 +15,25 @@ find_package(iPlug2 REQUIRED)
 add_library(opufx_dsp INTERFACE)
 target_include_directories(opufx_dsp INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/src/dsp)
 
+if(APPLE)
+  foreach(PLUGIN_NAME OO_EQ OO_Comp OO_Reverb OO_TrackPolish)
+    configure_file(resources/macOS-Info.plist.in "${CMAKE_CURRENT_SOURCE_DIR}/resources/${PLUGIN_NAME}-macOS-Info.plist" @ONLY)
+    configure_file(resources/VST3-Info.plist.in "${CMAKE_CURRENT_SOURCE_DIR}/resources/${PLUGIN_NAME}-VST3-Info.plist" @ONLY)
+  endforeach()
+endif()
+
 # Helper: after iplug_add_plugin creates _<name>-base, attach DSP include
 function(add_opu_plugin NAME)
   cmake_parse_arguments(ARG "" "" "SOURCES" ${ARGN})
   iplug_add_plugin(${NAME}
     SOURCES ${ARG_SOURCES}
-    FORMATS VST3 CLAP APP
+    FORMATS VST3
     LINK opufx_dsp
   )
-  target_include_directories(_${NAME}-base INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/src/dsp)
+  target_include_directories(_${NAME}-base INTERFACE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/${NAME}
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/dsp
+  )
 endfunction()
 
 add_opu_plugin(OO_EQ

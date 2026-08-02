@@ -11,17 +11,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
+        os: [windows-latest, macos-latest]
         include:
           - os: windows-latest
-            generator: "Ninja"
+            generator: "Visual Studio 18 2026"
             artifact: plugins-windows
           - os: macos-latest
             generator: "Ninja"
             artifact: plugins-macos
-          - os: ubuntu-latest
-            generator: "Ninja"
-            artifact: plugins-linux
 
     runs-on: ${{ matrix.os }}
 
@@ -32,6 +29,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install Ninja
+        if: runner.os != 'Windows'
         shell: bash
         run: |
           if ! command -v ninja &> /dev/null; then
@@ -43,87 +41,43 @@ jobs:
           ninja --version
 
       - name: Download VST3 SDK
-        if: runner.os != 'Linux'
         shell: bash
         run: |
           cd iPlug2/Dependencies/IPlug
-          if [ ! -d "VST3_SDK" ] || [ -z "$(ls -A VST3_SDK 2>/dev/null)" ]; then
+          if [ ! -f "VST3_SDK/base/source/baseiids.cpp" ]; then
+            rm -rf VST3_SDK
             git clone https://github.com/steinbergmedia/vst3sdk.git --branch master --single-branch --depth=1 VST3_SDK
-            cd VST3_SDK
-            git submodule update --init --recursive --depth=1
+            git -C VST3_SDK submodule update --init --recursive --depth=1
           else
-            echo "VST3_SDK already exists, skipping"
+            echo "VST3 SDK already installed, skipping"
           fi
-
-      - name: Download CLAP SDK
-        shell: bash
-        run: |
-          cd iPlug2/Dependencies/IPlug
-          if [ ! -d "CLAP_SDK" ] || [ -z "$(ls -A CLAP_SDK 2>/dev/null)" ]; then
-            git clone https://github.com/free-audio/clap.git --branch main --single-branch --depth=1 CLAP_SDK
-          else
-            echo "CLAP_SDK already exists, skipping"
-          fi
-
-      - name: Install dependencies (Ubuntu)
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ninja-build libx11-dev libcairo2-dev libfreetype6-dev libasound2-dev libjack-jackd2-dev libcurl4-openssl-dev libxinerama-dev
-
-      - name: Install dependencies (macOS)
-        if: runner.os == 'macOS'
-        run: |
-          brew install ninja
 
       - name: Clean build directory
+        shell: bash
         run: rm -rf build
 
       - name: Configure
         shell: bash
         run: |
-          cmake -B build -G "${{ matrix.generator }}" -DCMAKE_BUILD_TYPE=Release -DIPLUG2_DIR=${{ github.workspace }}/iPlug2
+          cmake_args=(-B build -G "${{ matrix.generator }}" -DCMAKE_BUILD_TYPE=Release "-DIPLUG2_DIR=${{ github.workspace }}/iPlug2")
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            cmake_args+=(-A x64)
+          fi
+          cmake "${cmake_args[@]}"
 
       - name: Build
-        run: cmake --build build --config Release
+        run: cmake --build build --config Release --parallel
 
       - name: Upload artifacts (Windows)
         if: runner.os == 'Windows'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}
-          path: |
-            build/src/OO_EQ/out/*.vst3
-            build/src/OO_Comp/out/*.vst3
-            build/src/OO_Reverb/out/*.vst3
-            build/src/OO_TrackPolish/out/*.vst3
+          path: build/out/*.vst3
 
       - name: Upload artifacts (macOS)
         if: runner.os == 'macOS'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}
-          path: |
-            build/src/OO_EQ/out/*.vst3
-            build/src/OO_Comp/out/*.vst3
-            build/src/OO_Reverb/out/*.vst3
-            build/src/OO_TrackPolish/out/*.vst3
-            build/src/OO_EQ/out/*.component
-            build/src/OO_Comp/out/*.component
-            build/src/OO_Reverb/out/*.component
-            build/src/OO_TrackPolish/out/*.component
-
-      - name: Upload artifacts (Linux)
-        if: runner.os == 'Linux'
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.artifact }}
-          path: |
-            build/src/OO_EQ/out/*.vst3
-            build/src/OO_Comp/out/*.vst3
-            build/src/OO_Reverb/out/*.vst3
-            build/src/OO_TrackPolish/out/*.vst3
-            build/src/OO_EQ/out/*.clap
-            build/src/OO_Comp/out/*.clap
-            build/src/OO_Reverb/out/*.clap
-            build/src/OO_TrackPolish/out/*.clap
+          path: build/out/*.vst3

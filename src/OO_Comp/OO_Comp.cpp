@@ -1,11 +1,12 @@
 #include "OO_Comp.h"
 #include "IPlug_include_in_plug_src.h"
+#include "IControls.h"
 
 using namespace iplug;
 using namespace igraphics;
 
 OO_Comp::OO_Comp(const InstanceInfo& info)
-: Plugin(info, MakeConfig(kNumPresets))
+: Plugin(info, MakeConfig(kNumParams, kNumPresets))
 {
   GetParam(kParamThreshold)->InitDouble("Threshold", -18.0, -40.0, 0.0, 0.1, "dB");
   GetParam(kParamRatio)->InitDouble("Ratio", 2.0, 1.0, 20.0, 0.1, "");
@@ -60,7 +61,7 @@ void OO_Comp::ProcessBlock(sample** inputs, sample** outputs, int nFrames) {
     memcpy(outputs[ch], inputs[ch], nFrames * sizeof(sample));
   }
 
-  if (GetParam(kParamBypass)->GetBool() || mComp.IsBypassed()) return;
+  if (GetParam(kParamBypass)->Bool() || mComp.IsBypassed()) return;
 
   std::vector<float> buf(nFrames * nCh);
   for (int i = 0; i < nFrames; i++) {
@@ -81,14 +82,14 @@ void OO_Comp::OnReset() { mComp.Reset(); }
 
 void OO_Comp::OnParamChange(int paramIdx) {
   if (paramIdx == kParamBypass) {
-    if (GetParam(kParamBypass)->GetBool()) {
+    if (GetParam(kParamBypass)->Bool()) {
       mComp.Configure(opu::dsp::SimpleCompressor::Params{});
     } else {
       UpdateParams();
     }
     return;
   }
-  if (GetParam(kParamBypass)->GetBool()) return;
+  if (GetParam(kParamBypass)->Bool()) return;
   UpdateParams();
 }
 

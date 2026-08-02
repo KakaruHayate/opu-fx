@@ -1,11 +1,12 @@
 #include "OO_TrackPolish.h"
 #include "IPlug_include_in_plug_src.h"
+#include "IControls.h"
 
 using namespace iplug;
 using namespace igraphics;
 
 OO_TrackPolish::OO_TrackPolish(const InstanceInfo& info)
-: Plugin(info, MakeConfig(kNumPresets))
+: Plugin(info, MakeConfig(kNumParams, kNumPresets))
 {
   // EQ
   GetParam(kEqLowDb)->InitDouble("EQ Low", 0.0, -12.0, 12.0, 0.1, "dB");
@@ -98,7 +99,7 @@ void OO_TrackPolish::ProcessBlock(sample** inputs, sample** outputs, int nFrames
     memcpy(outputs[ch], inputs[ch], nFrames * sizeof(sample));
   }
 
-  if (GetParam(kBypass)->GetBool()) return;
+  if (GetParam(kBypass)->Bool()) return;
 
   // De-interleave
   std::vector<float> buf(nFrames * nCh);
@@ -128,7 +129,7 @@ void OO_TrackPolish::OnReset() {
 }
 
 void OO_TrackPolish::OnParamChange(int paramIdx) {
-  if (GetParam(kBypass)->GetBool()) return;
+  if (GetParam(kBypass)->Bool()) return;
   UpdateParams();
 }
 
