@@ -25,8 +25,15 @@ endif()
 # Helper: after iplug_add_plugin creates _<name>-base, attach DSP include
 function(add_opu_plugin NAME)
   cmake_parse_arguments(ARG "" "" "SOURCES" ${ARGN})
+
+  set(PLUGIN_SOURCES ${ARG_SOURCES})
+  if(WIN32)
+    list(APPEND PLUGIN_SOURCES resources/plugin.rc)
+  endif()
+
   iplug_add_plugin(${NAME}
-    SOURCES ${ARG_SOURCES}
+    SOURCES ${PLUGIN_SOURCES}
+    RESOURCES resources/fonts/Roboto-Regular.ttf
     FORMATS VST3
     LINK opufx_dsp
   )
