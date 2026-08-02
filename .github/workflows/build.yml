@@ -11,17 +11,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
+        os: [windows-latest, macos-latest]
         include:
           - os: windows-latest
-            generator: "Ninja"
+            generator: "Visual Studio 17 2022"
             artifact: plugins-windows
           - os: macos-latest
             generator: "Ninja"
             artifact: plugins-macos
-          - os: ubuntu-latest
-            generator: "Ninja"
-            artifact: plugins-linux
 
     runs-on: ${{ matrix.os }}
 
@@ -32,6 +29,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install Ninja
+        if: runner.os != 'Windows'
         shell: bash
         run: |
           if ! command -v ninja &> /dev/null; then
@@ -54,12 +52,6 @@ jobs:
             echo "VST3 SDK already installed, skipping"
           fi
 
-      - name: Install dependencies (Ubuntu)
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ninja-build libx11-dev libcairo2-dev libfreetype6-dev libasound2-dev libjack-jackd2-dev libcurl4-openssl-dev libxinerama-dev
-
       - name: Clean build directory
         shell: bash
         run: rm -rf build
@@ -67,7 +59,11 @@ jobs:
       - name: Configure
         shell: bash
         run: |
-          cmake -B build -G "${{ matrix.generator }}" -DCMAKE_BUILD_TYPE=Release -DIPLUG2_DIR=${{ github.workspace }}/iPlug2
+          cmake_args=(-B build -G "${{ matrix.generator }}" -DCMAKE_BUILD_TYPE=Release "-DIPLUG2_DIR=${{ github.workspace }}/iPlug2")
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            cmake_args+=(-A x64)
+          fi
+          cmake "${cmake_args[@]}"
 
       - name: Build
         run: cmake --build build --config Release --parallel
@@ -81,13 +77,6 @@ jobs:
 
       - name: Upload artifacts (macOS)
         if: runner.os == 'macOS'
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.artifact }}
-          path: build/out/*.vst3
-
-      - name: Upload artifacts (Linux)
-        if: runner.os == 'Linux'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}
