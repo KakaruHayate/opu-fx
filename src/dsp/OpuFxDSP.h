@@ -367,8 +367,9 @@ private:
         float damp1 = 0.0f, damp2 = 0.0f;
         float fb = 0.5f;
 
-        explicit CombFilter(int sz) : size(sz) {
-            buf = new float[std::max(1, sz)];
+        CombFilter() = default;
+        explicit CombFilter(int sz) : size(std::max(1, sz)) {
+            buf = new float[size];
             std::fill(buf, buf + size, 0.0f);
         }
         ~CombFilter() { delete[] buf; }
@@ -378,8 +379,24 @@ private:
             filtStore(o.filtStore), damp1(o.damp1), damp2(o.damp2), fb(o.fb) {
             o.buf = nullptr; o.size = 0;
         }
+        CombFilter& operator=(CombFilter&& o) noexcept {
+            if (this != &o) {
+                delete[] buf;
+                buf = o.buf;
+                size = o.size;
+                idx = o.idx;
+                filtStore = o.filtStore;
+                damp1 = o.damp1;
+                damp2 = o.damp2;
+                fb = o.fb;
+                o.buf = nullptr;
+                o.size = 0;
+            }
+            return *this;
+        }
 
         void Reset() {
+            if (buf == nullptr) return;
             std::fill(buf, buf + size, 0.0f);
             filtStore = 0.0f;
             idx = 0;
@@ -403,8 +420,9 @@ private:
         int size = 0, idx = 0;
         float fb = 0.5f;
 
-        explicit AllpassFilter(int sz) : size(sz) {
-            buf = new float[std::max(1, sz)];
+        AllpassFilter() = default;
+        explicit AllpassFilter(int sz) : size(std::max(1, sz)) {
+            buf = new float[size];
             std::fill(buf, buf + size, 0.0f);
         }
         ~AllpassFilter() { delete[] buf; }
@@ -412,8 +430,21 @@ private:
         AllpassFilter& operator=(const AllpassFilter&) = delete;
         AllpassFilter(AllpassFilter&& o) noexcept : buf(o.buf), size(o.size),
             idx(o.idx), fb(o.fb) { o.buf = nullptr; o.size = 0; }
+        AllpassFilter& operator=(AllpassFilter&& o) noexcept {
+            if (this != &o) {
+                delete[] buf;
+                buf = o.buf;
+                size = o.size;
+                idx = o.idx;
+                fb = o.fb;
+                o.buf = nullptr;
+                o.size = 0;
+            }
+            return *this;
+        }
 
         void Reset() {
+            if (buf == nullptr) return;
             std::fill(buf, buf + size, 0.0f);
             idx = 0;
         }

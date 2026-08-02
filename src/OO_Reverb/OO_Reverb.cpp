@@ -1,11 +1,12 @@
 #include "OO_Reverb.h"
 #include "IPlug_include_in_plug_src.h"
+#include "IControls.h"
 
 using namespace iplug;
 using namespace igraphics;
 
 OO_Reverb::OO_Reverb(const InstanceInfo& info)
-: Plugin(info, MakeConfig(kNumPresets))
+: Plugin(info, MakeConfig(kNumParams, kNumPresets))
 {
   GetParam(kParamRoomSize)->InitDouble("Room Size", 0.30, 0.0, 1.0, 0.01, "");
   GetParam(kParamDamp)->InitDouble("Damp", 0.7, 0.0, 1.0, 0.01, "");
@@ -60,7 +61,7 @@ void OO_Reverb::ProcessBlock(sample** inputs, sample** outputs, int nFrames) {
     memcpy(outputs[ch], inputs[ch], nFrames * sizeof(sample));
   }
 
-  if (GetParam(kParamBypass)->GetBool() || mReverb.IsBypassed()) return;
+  if (GetParam(kParamBypass)->Bool() || mReverb.IsBypassed()) return;
 
   std::vector<float> buf(nFrames * nCh);
   for (int i = 0; i < nFrames; i++) {
@@ -81,14 +82,14 @@ void OO_Reverb::OnReset() { mReverb.Reset(); }
 
 void OO_Reverb::OnParamChange(int paramIdx) {
   if (paramIdx == kParamBypass) {
-    if (GetParam(kParamBypass)->GetBool()) {
+    if (GetParam(kParamBypass)->Bool()) {
       mReverb.Configure(opu::dsp::Freeverb::Params{});
     } else {
       UpdateParams();
     }
     return;
   }
-  if (GetParam(kParamBypass)->GetBool()) return;
+  if (GetParam(kParamBypass)->Bool()) return;
   UpdateParams();
 }
 

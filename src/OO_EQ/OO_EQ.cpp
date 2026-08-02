@@ -1,11 +1,12 @@
 #include "OO_EQ.h"
 #include "IPlug_include_in_plug_src.h"
+#include "IControls.h"
 
 using namespace iplug;
 using namespace igraphics;
 
 OO_EQ::OO_EQ(const InstanceInfo& info)
-: Plugin(info, MakeConfig(kNumPresets))
+: Plugin(info, MakeConfig(kNumParams, kNumPresets))
 {
   GetParam(kParamLowDb)->InitDouble("Low dB", 0.0, -12.0, 12.0, 0.1, "dB");
   GetParam(kParamMidFreq)->InitDouble("Mid Freq", 3000.0, 200.0, 6000.0, 10.0, "Hz");
@@ -62,7 +63,7 @@ void OO_EQ::ProcessBlock(sample** inputs, sample** outputs, int nFrames) {
     memcpy(outputs[ch], inputs[ch], nFrames * sizeof(sample));
   }
 
-  if (GetParam(kParamBypass)->GetBool() || mEQ.IsBypassed()) return;
+  if (GetParam(kParamBypass)->Bool() || mEQ.IsBypassed()) return;
 
   // De-interleave
   std::vector<float> buf(nFrames * nCh);
@@ -87,14 +88,14 @@ void OO_EQ::OnReset() {
 
 void OO_EQ::OnParamChange(int paramIdx) {
   if (paramIdx == kParamBypass) {
-    if (GetParam(kParamBypass)->GetBool()) {
+    if (GetParam(kParamBypass)->Bool()) {
       mEQ.Configure(opu::dsp::BiquadEQ::Params{});
     } else {
       UpdateParams();
     }
     return;
   }
-  if (GetParam(kParamBypass)->GetBool()) return;
+  if (GetParam(kParamBypass)->Bool()) return;
   UpdateParams();
 }
 
